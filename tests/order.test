@@ -58,23 +58,36 @@ class CommerceMigrateOrderTest extends CommerceMigrateBaseTest {
     if (FALSE !== $order) {
       /* @var EntityDrupalWrapper $order_wrapper */
       $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-      $products_count = 0;
-      $total_amount = 0;
+
+      $line_items_shipping = array();
+      $line_items_products = array();
+
+      $total_amount_shipping = 0;
+      $total_amount_products = 0;
+
+      foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+        if (isset($line_item_wrapper->commerce_product)) {
+          $line_items_products[] = $line_item_wrapper;
+          $total_amount_products += $line_item_wrapper->commerce_total->amount->value();
+        }
+
+        if ('shipping' === $line_item_wrapper->type->value()) {
+          $line_items_shipping[] = $line_item_wrapper;
+          $total_amount_shipping += $line_item_wrapper->commerce_total->amount->value();
+        }
+      }
 
       // Only 4 line items SKU's starts from "6".
       // @see CommerceExampleProductLineItemMigration::prepareRow()
       $this->assertIdentical(4, $order_wrapper->commerce_line_items->count(), t('All line items imported and attached to an order.'));
-
-      foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
-        $products_count += (int) isset($line_item_wrapper->commerce_product);
-        $total_amount += $line_item_wrapper->commerce_total->amount->value();
-      }
-
       // Only 2 of 4 line items contains a product.
       // @see CommerceExampleProductLineItemMigration::shouldProductBeAttached()
-      $this->assertIdentical(2, $products_count, t('Correct number of line items contains a product.'));
-
-      $this->assertIdentical((int) $order_wrapper->commerce_order_total->amount->value(), $total_amount);
+      $this->assertIdentical(2, count($line_items_products), t('Number of product line items is correct.'));
+      // Since we have 4 line items and 2 of them are of "product" type,
+      // then other couple must be with "shipping" type.
+      $this->assertIdentical(2, count($line_items_shipping), t('Number of shipping line items is correct.'));
+      $this->assertIdentical(1797000, $total_amount_products, t('Product prices are correct.'));
+      $this->assertIdentical(1350000, $total_amount_shipping, t('Shipping prices are correct.'));
       $this->assertIdentical('completed', $order->status, t('An order has correct status.'));
       $this->assertIdentical('127.0.0.1', $order->hostname, t('An order has correct hostname.'));
       $this->assertIdentical('test@example.com', $order->mail, t('An order has correct email address.'));
