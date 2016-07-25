@@ -49,7 +49,7 @@ install:
 
   # Increase the MySQL server timetout and packet size.
   - mysql -uroot -e "SET GLOBAL wait_timeout = 36000;"
-  - mysql -uroot -e "SET GLOBAL max_allowed_packet = 33554432;"
+  - mysql -uroot -e "SET GLOBAL max_allowed_packet = 33554433;"
 
 before_script:
   - cd $DRUPALDIR
