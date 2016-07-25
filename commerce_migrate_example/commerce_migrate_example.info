@@ -1,7 +1,14 @@
-core = 7.x
-description = Demonstrate migration of products and product display nodes.
 name = Commerce Migrate Example
+description = Demonstrate migration of products and product display nodes.
 package = Commerce (contrib)
+hidden = TRUE
+core = 7.x
+
 files[] = commerce_migrate_example.migrate.inc
+files[] = migrations/order.inc
+files[] = migrations/product.inc
+files[] = migrations/product_display.inc
+files[] = migrations/product_line_item.inc
+
 dependencies[] = migrate
 dependencies[] = commerce_migrate

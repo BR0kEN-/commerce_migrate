@@ -1,15 +1,11 @@
 <?php
 
 abstract class CommerceMigrateBaseTest extends CommerceBaseTestCase {
-  /**
-   * Don't need most of default core modules.
-   */
-  protected $profile = 'minimal';
 
-  protected $store_admin;
+  protected $storeAdmin;
 
   /**
-   * Overrides CommerceBaseTestCase::permissionBuilder().
+   * {@inheritdoc}
    */
   protected function permissionBuilder($set) {
     $permissions = parent::permissionBuilder($set);
@@ -26,27 +22,37 @@ abstract class CommerceMigrateBaseTest extends CommerceBaseTestCase {
   }
 
   /**
-   * Overrides DrupalWebTestCase::setUp().
+   * {@inheritdoc}
    */
-  function setUp() {
-    $modules   = parent::setUpHelper('all');
-    $modules[] = 'migrate';
-    $modules[] = 'migrate_extras';
-    $modules[] = 'commerce_migrate';
-    $modules[] = 'commerce_migrate_example';
-    parent::setUp($modules);
-    $this->resetAll();
+  protected function setUp() {
+    parent::setUp(parent::setUpHelper('all', static::extraModules()));
 
     // Make sure the migrations are registered.
     migrate_static_registration();
 
-    $this->store_admin = $this->createStoreAdmin();
+    $this->storeAdmin = $this->createStoreAdmin();
 
-    if (!$this->store_admin) {
+    if (!$this->storeAdmin) {
       $this->fail(t('Failed to create Store Admin user for test.'));
     }
 
     // Set the default country to US.
     variable_set('site_default_country', 'US');
   }
+
+  /**
+   * Returns list of additional modules for enable before test will be run.
+   *
+   * @return string[]
+   *   List of module names.
+   */
+  protected static function extraModules() {
+    return array(
+      'migrate',
+      'migrate_extras',
+      'commerce_migrate',
+      'commerce_migrate_example',
+    );
+  }
+
 }

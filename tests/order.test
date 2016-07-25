@@ -1,0 +1,115 @@
+<?php
+/**
+ * @file
+ * Testing orders with imported line items and products.
+ */
+
+/**
+ * Class CommerceMigrateOrderTest.
+ */
+class CommerceMigrateOrderTest extends CommerceMigrateBaseTest {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Import orders'),
+      'group' => 'Commerce Migrate',
+      'description' => t('Import products, use them in line items and attach to orders.'),
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function extraModules() {
+    $modules = parent::extraModules();
+    $modules[] = 'commerce_shipping';
+
+    return $modules;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+
+    // Import products, use them in line items and then - in order.
+    foreach (array('Product', 'ProductLineItem', 'Order') as $migration) {
+      $migration = "CommerceExample$migration";
+
+      $this->assertEqual(Migration::getInstance($migration)->processImport(), Migration::RESULT_COMPLETED, t('Migration "@migration" has been successfully completed.', array(
+        '@migration' => $migration,
+      )));
+    }
+  }
+
+  /**
+   * Check that order has been imported properly.
+   *
+   * @param string $order_number
+   *   Order number. See "orders.csv".
+   */
+  public function testOrderTotalAmount($order_number = 'EXAMPLE-ORDER-1') {
+    $order = commerce_order_load_by_number($order_number);
+
+    if (FALSE !== $order) {
+      /* @var EntityDrupalWrapper $order_wrapper */
+      $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+      $products_count = 0;
+      $total_amount = 0;
+
+      // Only 4 line items SKU's starts from "6".
+      // @see CommerceExampleProductLineItemMigration::prepareRow()
+      $this->assertIdentical(4, $order_wrapper->commerce_line_items->count(), t('All line items imported and attached to an order.'));
+
+      foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+        $products_count += (int) isset($line_item_wrapper->commerce_product);
+        $total_amount += $line_item_wrapper->commerce_total->amount->value();
+      }
+
+      // Only 2 of 4 line items contains a product.
+      // @see CommerceExampleProductLineItemMigration::shouldProductBeAttached()
+      $this->assertIdentical(2, $products_count, t('Correct number of line items contains a product.'));
+
+      $this->assertIdentical((int) $order_wrapper->commerce_order_total->amount->value(), $total_amount);
+      $this->assertIdentical('completed', $order->status, t('An order has correct status.'));
+      $this->assertIdentical('127.0.0.1', $order->hostname, t('An order has correct hostname.'));
+      $this->assertIdentical('test@example.com', $order->mail, t('An order has correct email address.'));
+    }
+    else {
+      $this->fail(t('Order cannot be loaded by "@order_number" order number.', array(
+        '@order_number' => $order_number,
+      )));
+    }
+  }
+
+  /**
+   * Check that product has correct currency code.
+   *
+   * @param string $sku
+   *   Product SKU.
+   * @param string $currency_code
+   *   Currency code.
+   */
+  public function testProductCurrencyCode($sku = '64671631', $currency_code = 'GBP') {
+    $product = commerce_product_load_by_sku($sku);
+
+    if (FALSE !== $product) {
+      /* @var EntityDrupalWrapper $product_wrapper */
+      $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
+
+      $this->assertIdentical($currency_code, $product_wrapper->commerce_price->currency_code->value(), t('Product, loaded by "@sku" SKU, has correct currency code.', array(
+        '@sku' => $sku,
+      )));
+    }
+    else {
+      $this->fail(t('Product cannot be loaded by "@sku" SKU.', array(
+        '@sku' => $sku,
+      )));
+    }
+  }
+
+}

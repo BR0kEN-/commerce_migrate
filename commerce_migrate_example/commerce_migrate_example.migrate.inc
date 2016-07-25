@@ -1,53 +1,69 @@
 <?php
-
 /**
  * @file
- *   A simple-as-possible migration of Commerce product and product display node
- *   information.
+ * As simple as possible migrations.
  *
- *   You can run this migration with
- *     drush mi CommerceExampleProduct
- *     drush mi CommerceExampleProductDisplay
+ * You can run these migration with:
+ * - drush mi CommerceExampleProduct
  *
- *   To see the status of all migrations and what migrations are available:
- *     drush ms
+ * To roll back migrations:
+ * - drush migrate-rollback CommerceExampleProductDisplay
  *
- *   To roll back migrations:
- *     drush migrate-rollback CommerceExampleProductDisplay
- *     drush migrate-rollback CommerceExampleProduct
+ * To see the status of all migrations and what migrations are available:
+ * - drush ms
  *
- *   Please make sure you don't get one of the products into the cart while
- *   you're rolling back, as this makes no end of messiness. Products in the cart
- *   are (not supposed to be able) to be deleted.
+ * Please make sure you don't get one of the products into the cart while
+ * you're rolling back, as this makes no end of messiness. Products in the
+ * cart are (not supposed to be able) to be deleted.
  */
 
-/*
+/**
  * Implements hook_migrate_api().
  */
 function commerce_migrate_example_migrate_api() {
-  $api = array(
+  $info = array(
     'api' => 2,
     'groups' => array(
       'commerce_example' => array(
         'title' => t('Commerce Example Imports'),
       ),
     ),
-    'migrations' => array(
-      'CommerceExampleProduct' => array(
-        'class_name' => 'CommerceMigrateExampleProductMigration',
-        'group' => 'commerce_example',
-      ),
-      'CommerceExampleProductDisplay' => array(
-        'class_name' => 'CommerceMigrateExampleDisplayNodeMigration',
-        'group' => 'commerce_example',
-        'dependencies' => array(
-          'CommerceExampleProduct',
-        ),
-      ),
+  );
+
+  $info['migrations']['CommerceExampleProduct'] = array(
+    'class_name' => 'CommerceExampleProductMigration',
+    'group_name' => 'commerce_example',
+    'source_file' => 'products.csv',
+  );
+
+  $info['migrations']['CommerceExampleProductDisplay'] = array(
+    'class_name' => 'CommerceExampleProductDisplayMigration',
+    'group_name' => 'commerce_example',
+    'source_file' => 'products.csv',
+    'dependencies' => array(
+      'CommerceExampleProduct',
     ),
   );
 
-  return $api;
+  $info['migrations']['CommerceExampleProductLineItem'] = array(
+    'class_name' => 'CommerceExampleProductLineItemMigration',
+    'group_name' => 'commerce_example',
+    'source_file' => 'products.csv',
+    'dependencies' => array(
+      'CommerceExampleProduct',
+    ),
+  );
+
+  $info['migrations']['CommerceExampleOrder'] = array(
+    'class_name' => 'CommerceExampleOrderMigration',
+    'group_name' => 'commerce_example',
+    'source_file' => 'orders.csv',
+    'dependencies' => array(
+      'CommerceExampleProductLineItem',
+    ),
+  );
+
+  return $info;
 }
 
 /**
@@ -55,107 +71,113 @@ function commerce_migrate_example_migrate_api() {
  * CommerceMigrateExample classes.
  */
 abstract class CommerceMigrateExampleMigration extends Migration {
-  public function __construct($arguments = array()) {
-    // Always call the parent constructor first for basic setup
+
+  /**
+   * Module path.
+   *
+   * @var string
+   */
+  protected $modulePath = '';
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(array $arguments) {
     parent::__construct($arguments);
+
+    if (empty($arguments['source_file'])) {
+      throw new Exception(t('Name of CSV file with source data has not been set.'));
+    }
+
+    $this->modulePath = drupal_get_path('module', 'commerce_migrate_example');
+    $csv_file = "$this->modulePath/files/{$arguments['source_file']}";
+
+    if (!file_exists($csv_file)) {
+      throw new Exception(t('The "@csv_file" CSV file does not exists.', array(
+        '@csv_file' => $csv_file,
+      )));
+    }
+
+    // Create a MigrateSource object, which manages retrieving the input data.
+    $this->source = new MigrateSourceCSV($csv_file, $this->csvColumns());
+  }
+
+  /**
+   * Create a map object for tracking the relationships between source rows.
+   *
+   * @param array $destination_schema
+   *   Values of any MigrateDestination::getKeySchema().
+   */
+  protected function buildMap($destination_schema) {
+    // Create a map object for tracking the relationships between source rows.
+    $columns = $this->csvColumns();
+    // The first column in CSV - the primary index.
+    list($key, $name) = $columns[0];
+
+    $this->map = new MigrateSQLMap(
+      $this->machineName,
+      array(
+        // The 'SKU' field in the CSV file is the key.
+        $key => array(
+          'type' => 'varchar',
+          'length' => 24,
+          'not null' => TRUE,
+          'description' => $name,
+        ),
+      ),
+      $destination_schema
+    );
   }
 
   /**
    * Provide the names of the incoming CSV file columns.
+   *
+   * @return array[]
+   *   An array with column name and title.
    */
-  function csvcolumns() {
-    $columns[0] = array('SKU', 'SKU');
-    $columns[1] = array('Title', 'Title');
-    $columns[2] = array('Price', 'Price');
-    $columns[3] = array('Image', 'Image');
-    $columns[4] = array('Description', 'Description');
+  abstract protected function csvColumns();
+
+}
+
+/**
+ * Class CommerceMigrateExampleProductsCsv.
+ *
+ * Represents "products.csv".
+ */
+abstract class CommerceMigrateExampleProductsCsv extends CommerceMigrateExampleMigration {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function csvColumns() {
+    $columns = array();
+    $columns[] = array('sku', 'SKU');
+    $columns[] = array('title', 'Title');
+    $columns[] = array('price', 'Price');
+    $columns[] = array('currency_code', 'Currency code');
+    $columns[] = array('image', 'Image');
+    $columns[] = array('description', 'Description');
+
     return $columns;
   }
+
 }
 
 /**
- * Import Products into the "product" product type.
+ * Class CommerceMigrateExampleOrdersCsv.
  *
- * This simple migration assumes that a product type called 'product'
- * already exists, and has the sku, title, commerce_price, and field_image
- * fields.
+ * Represents "orders.csv".
  */
-class CommerceMigrateExampleProductMigration extends CommerceMigrateExampleMigration {
-  public function __construct($arguments = array()) {
-    parent::__construct($arguments);
-    $this->description = t('Import products from CSV file (with no header).');
+abstract class CommerceMigrateExampleOrdersCsv extends CommerceMigrateExampleMigration {
 
-    // Create a map object for tracking the relationships between source rows
-    $this->map = new MigrateSQLMap($this->machineName,
-      array(
-        // The 'SKU' field in the CSV file is the key.
-        'SKU' => array('type' => 'varchar',
-                       'length' => 24,
-                       'not null' => TRUE,
-                       'description' => 'SKU',
-                      ),
-      ),
-      // Rather than specifying the type directly here, we would probably use
-      // arguments, but instead this just specifies the 'product' product type
-      // to make it obvious what's going on.
-      MigrateDestinationEntityAPI::getKeySchema('commerce_product', 'product')
-    );
+  /**
+   * {@inheritdoc}
+   */
+  protected function csvColumns() {
+    $columns = array();
+    $columns[] = array('number', 'Order number');
 
-    // Create a MigrateSource object, which manages retrieving the input data.
-    $csv_file = drupal_get_path('module', 'commerce_migrate_example') . '/commerce_migrate_example.csv';
-    $this->source = new MigrateSourceCSV($csv_file, $this->csvcolumns());
-
-    // Again here we're hardwiring the product type to 'product'.
-    $this->destination = new MigrateDestinationEntityAPI('commerce_product', 'product');
-
-    $this->addFieldMapping('sku', 'SKU');
-    $this->addFieldMapping('title', 'Title');
-    $this->addFieldMapping('commerce_price', 'Price');
-    $this->addFieldMapping('field_image', 'Image');
-    $this->addFieldMapping('field_image:file_class')
-         ->defaultValue('MigrateFileUri');
-    $this->addFieldMapping('field_image:source_dir')
-         ->defaultValue(drupal_get_path('module', 'commerce_migrate_example') . '/images');
-  }
-}
-
-/**
- * Import nodes of type 'product_display' from the same CSV file.
- *
- * This is hard-wired to the node type 'product_display' with a
- * product reference field of type field_product.
- */
-class CommerceMigrateExampleDisplayNodeMigration extends CommerceMigrateExampleMigration {
-  public function __construct($arguments = array()) {
-    parent::__construct($arguments);
-    $this->description = t('Import product display nodes from CSV file (with no header).');
-    $this->dependencies = array('CommerceExampleProduct');
-
-    // Create a map object for tracking the relationships between source rows
-    $this->map = new MigrateSQLMap($this->machineName,
-      array(
-        'SKU' => array('type' => 'varchar',
-                     'length' => 24,
-                     'not null' => TRUE,
-                     'description' => 'SKU',
-        ),
-      ),
-      MigrateDestinationNode::getKeySchema()
-    );
-
-    // Create a MigrateSource object, which manages retrieving the input data.
-    $csv_file = drupal_get_path('module', 'commerce_migrate_example') . '/commerce_migrate_example.csv';
-    $this->source = new MigrateSourceCSV($csv_file, $this->csvcolumns());
-
-    $this->destination = new MigrateDestinationNode('product_display');
-
-    // For a multivalued import, see the field_migrate_example_country mapping
-    // in the Migrate Example in beer.inc.
-    // Here we do a single SKU per product node.
-    $this->addFieldMapping('field_product', 'SKU')->sourceMigration('CommerceExampleProduct');
-
-    $this->addFieldMapping('title', 'Title');
-    $this->addFieldMapping('body', 'Description');
+    return $columns;
   }
 
 }

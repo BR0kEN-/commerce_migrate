@@ -13,4 +13,5 @@ files[] = plugins/destinations/commerce_product.inc
 files[] = plugins/destinations/fields.inc
 
 files[] = tests/base.test
+files[] = tests/order.test
 files[] = tests/destinations/product.test
