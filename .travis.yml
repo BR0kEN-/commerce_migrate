@@ -2,18 +2,13 @@ language: php
 sudo: false
 
 php:
-  # Use >= 5.4 since it has built-in webserver.
   - 5.4
   - 5.5
   - 5.6
   - 7
-  # @todo Impossible to use HHVM since it will not have "$PHPINI" and tests will be failed every time.
 
 services:
   - mysql
-
-env:
-  - TESTGROUP="Commerce Migrate" MODULE="commerce_migrate" PROFILE="minimal" MODULES="migrate commerce simpletest"
 
 matrix:
   fast_finish: true
@@ -21,13 +16,15 @@ matrix:
     - php: 7
 
 install:
-  # Now we are in the directory with repository sources. Go back
-  # to "vendor" directory, where project will be located.
-  - cd ..
+  # Set default values for environment variables.
+  - ${PROFILE:="minimal"}
+  - ${MODULES:="simpletest"}
+  - ${TESTARGS:="--all"}
 
   # Set environment variables.
+  - DIRPATH=$(pwd)
   - PHPINI="$HOME/.phpenv/versions/$(phpenv version-name)/etc/php.ini"
-  - DRUPALDIR="$(pwd)/drupal"
+  - DRUPALDIR="$(dirname $DIRPATH)/drupal"
   - DRUPALHOST="127.0.0.1:1349"
 
   # Populate Composer packages.
@@ -37,10 +34,7 @@ install:
   - composer global require --prefer-source --no-interaction drush/drush:8.*
 
   # Download Drupal.
-  - drush dl drupal-7 --drupal-project-rename=$(basename $DRUPALDIR)
-
-  # Move module to Drupal.
-  - mv $MODULE/ $DRUPALDIR/sites/all/modules/
+  - drush dl drupal-7 --drupal-project-rename=$(basename $DRUPALDIR) --destination=$(dirname $DRUPALDIR)
 
    # Disable Sendmail.
   - echo sendmail_path=$(which true) >> $PHPINI
@@ -52,17 +46,20 @@ install:
   - mysql -uroot -e "SET GLOBAL wait_timeout = 36000;"
   - mysql -uroot -e "SET GLOBAL max_allowed_packet = 33554432;"
 
+  # Move module to Drupal.
+  - mv $DIRPATH/ $DRUPALDIR/sites/all/modules/
+
 before_script:
   - cd $DRUPALDIR
   # Install Drupal.
   - drush si -y $PROFILE --db-url=mysql://root:@127.0.0.1/drupal --account-name=admin --account-pass=admin --site-mail=admin@example.com --site-name=Test site
-  # Enabled set of modules.
+  # Enable set of modules.
   - drush en -y $MODULES
   # Start HTTP server.
   - drush runserver $DRUPALHOST > /dev/null 2>&1 &
 
 script:
-  - php scripts/run-tests.sh --verbose --color --concurrency 4 --php $(which php) --url http://$DRUPALHOST "$TESTGROUP" | tee /tmp/test.txt
+  - php scripts/run-tests.sh --verbose --color --concurrency 4 --php $(which php) --url http://$DRUPALHOST "$TESTARGS" | tee /tmp/test.txt
   # Exit with the inverted value, because if there are no fails found, it will exit with 1 and for us
   # that is a good thing so invert it to 0. Travis has some issues with the exclamation mark in front
   # so we have to fiddle a bit.
