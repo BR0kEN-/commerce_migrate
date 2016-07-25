@@ -13,7 +13,7 @@ services:
   - mysql
 
 env:
-  - TESTGROUP="Commerce Migrate" MODULENAME="commerce_migrate" DRUPALHOST="127.0.0.1:1349"
+  - TESTGROUP="Commerce Migrate" MODULE="commerce_migrate" PROFILE="minimal" MODULES="commerce simpletest"
 
 matrix:
   fast_finish: true
@@ -28,6 +28,7 @@ install:
   # Set environment variables.
   - PHPINI="$HOME/.phpenv/versions/$(phpenv version-name)/etc/php.ini"
   - DRUPALDIR="$(pwd)/drupal"
+  - DRUPALHOST="127.0.0.1:1349"
 
   # Populate Composer packages.
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
@@ -39,7 +40,7 @@ install:
   - drush dl drupal-7 --drupal-project-rename=$(basename $DRUPALDIR)
 
   # Move module to Drupal.
-  - mv $MODULENAME/ $DRUPALDIR/sites/all/modules/
+  - mv $MODULE/ $DRUPALDIR/sites/all/modules/
 
    # Disable Sendmail.
   - echo sendmail_path=$(which true) >> $PHPINI
@@ -54,9 +55,9 @@ install:
 before_script:
   - cd $DRUPALDIR
   # Install Drupal.
-  - drush si -y minimal --db-url=mysql://root:@127.0.0.1/drupal --account-name=admin --account-pass=admin --site-mail=admin@example.com --site-name=Test site
+  - drush si -y $PROFILE --db-url=mysql://root:@127.0.0.1/drupal --account-name=admin --account-pass=admin --site-mail=admin@example.com --site-name=Test site
   # Enabled set of modules.
-  - drush en -y simpletest
+  - drush en -y $MODULES
   # Start HTTP server.
   - drush runserver $DRUPALHOST > /dev/null 2>&1 &
 
