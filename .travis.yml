@@ -13,7 +13,7 @@ services:
   - mysql
 
 env:
-  - TESTGROUP="Commerce Migrate" MODULE="commerce_migrate" PROFILE="minimal" MODULES="commerce simpletest"
+  - TESTGROUP="Commerce Migrate" MODULE="commerce_migrate" PROFILE="minimal" MODULES="migrate commerce simpletest"
 
 matrix:
   fast_finish: true
