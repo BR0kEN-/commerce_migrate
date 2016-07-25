@@ -13,9 +13,7 @@ services:
   - mysql
 
 env:
-  - TESTGROUP="Commerce Migrate"
-  - DRUPALHOST="127.0.0.1:1349"
-  - MODULENAME="commerce_migrate"
+  - TESTGROUP="Commerce Migrate" MODULENAME="commerce_migrate" DRUPALHOST="127.0.0.1:1349"
 
 matrix:
   fast_finish: true
