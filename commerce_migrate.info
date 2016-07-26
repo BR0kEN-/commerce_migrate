@@ -5,7 +5,6 @@ package = Commerce (contrib)
 
 dependencies[] = migrate
 dependencies[] = migrate_extras
-dependencies[] = commerce
 dependencies[] = commerce_product
 
 ; Destination plugins
