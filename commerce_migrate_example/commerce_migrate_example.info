@@ -10,8 +10,6 @@ files[] = migrations/product.inc
 files[] = migrations/product_display.inc
 files[] = migrations/product_line_item.inc
 
-dependencies[] = views
 dependencies[] = migrate
 dependencies[] = commerce_migrate
-dependencies[] = commerce_customer
 dependencies[] = commerce_shipping
