@@ -9,8 +9,9 @@ dependencies[] = commerce
 dependencies[] = commerce_product
 
 test_dependencies[] = views
+test_dependencies[] = rules
+test_dependencies[] = addressfield
 test_dependencies[] = commerce_shipping
-test_dependencies[] = commerce_customer
 
 ; Destination plugins
 files[] = plugins/destinations/commerce_license.inc
