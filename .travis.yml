@@ -17,9 +17,9 @@ matrix:
 
 install:
   # Set default values for environment variables.
-  - ${PROFILE:="minimal"}
-  - ${MODULES:="simpletest"}
-  - ${TESTARGS:="--all"}
+  - PROFILE=${PROFILE:="minimal"}
+  - MODULES=${MODULES:="simpletest"}
+  - TESTARGS=${TESTARGS:="--all"}
 
   # Set environment variables.
   - DIRPATH=$(pwd)
