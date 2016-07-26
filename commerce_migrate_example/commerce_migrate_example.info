@@ -12,3 +12,4 @@ files[] = migrations/product_line_item.inc
 
 dependencies[] = migrate
 dependencies[] = commerce_migrate
+dependencies[] = commerce_shipping

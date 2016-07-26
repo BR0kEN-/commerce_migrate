@@ -18,7 +18,8 @@ matrix:
 install:
   # Set default values for environment variables.
   - PROFILE=${PROFILE:="minimal"}
-  - MODULES=${MODULES:="simpletest"}
+  - MODDL=${MODDL:="views"}
+  - MODEN=${MODEN:="simpletest"}
   - TESTARGS=${TESTARGS:="--all"}
 
   # Set environment variables.
@@ -54,9 +55,9 @@ before_script:
   # Install Drupal.
   - drush si -y $PROFILE --db-url=mysql://root:@127.0.0.1/drupal --account-name=admin --account-pass=admin --site-mail=admin@example.com --site-name=Testsite
   # Download set of modules.
-  - drush dl -y $MODULES
+  - drush dl -y $MODDL
   # Enable set of modules.
-  - drush en -y $MODULES
+  - drush en -y $MODEN
   # Start HTTP server.
   - drush runserver $DRUPALHOST > /dev/null 2>&1 &
 

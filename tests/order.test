@@ -17,6 +17,7 @@ class CommerceMigrateOrderTest extends CommerceMigrateBaseTest {
       'name' => t('Import orders'),
       'group' => 'Commerce Migrate',
       'description' => t('Import products, use them in line items and attach to orders.'),
+      'dependencies' => array('commerce_shipping'),
     );
   }
 
@@ -24,10 +25,9 @@ class CommerceMigrateOrderTest extends CommerceMigrateBaseTest {
    * {@inheritdoc}
    */
   protected static function extraModules() {
-    $modules = parent::extraModules();
-    $modules[] = 'commerce_shipping';
+    $info = static::getInfo();
 
-    return $modules;
+    return array_merge(parent::extraModules(), $info['dependencies']);
   }
 
   /**
