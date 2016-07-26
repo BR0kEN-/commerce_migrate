@@ -52,7 +52,7 @@ install:
 before_script:
   - cd $DRUPALDIR
   # Install Drupal.
-  - drush si -y $PROFILE --db-url=mysql://root:@127.0.0.1/drupal --account-name=admin --account-pass=admin --site-mail=admin@example.com --site-name=Test site
+  - drush si -y $PROFILE --db-url=mysql://root:@127.0.0.1/drupal --account-name=admin --account-pass=admin --site-mail=admin@example.com --site-name=Testsite
   # Enable set of modules.
   - drush en -y $MODULES
   # Start HTTP server.
