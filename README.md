@@ -4,8 +4,8 @@ General-purpose migration framework extending [Migrate](https://www.drupal.org/p
 
 - Migrate destination field handlers for commerce fields (reference fields, price field)
 - Migrate destination plugin for commerce product types
-  Commerce Migrate depends on Migrate Extras for Entity API and Address Field
-  integration.
+
+Commerce Migrate depends on `Migrate Extras` for `Entity API` and `Address Field` integration.
 
 ## Ubercart migration
 
