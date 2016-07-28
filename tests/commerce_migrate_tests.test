@@ -1,0 +1,97 @@
+<?php
+/**
+ * @file
+ * Tests of "Commerce Migrate".
+ */
+
+/**
+ * Class CommerceMigrateTestCase.
+ */
+class CommerceMigrateTestCase extends CommerceMigrateBaseTestCase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Commerce Migrate'),
+      'group' => 'Commerce Migrate',
+      'description' => t('Import products, product displays, line items and orders.'),
+      'dependencies' => array('commerce_shipping'),
+    );
+  }
+
+  /**
+   * Tests integrity of "EXAMPLE-ORDER-1" order.
+   */
+  public function testOrder() {
+    $order = $this->getOrder('EXAMPLE-ORDER-1');
+
+    $line_items_shipping = array();
+    $line_items_products = array();
+
+    $total_amount_shipping = 0;
+    $total_amount_products = 0;
+
+    foreach ($order->commerce_line_items as $line_item_wrapper) {
+      if (isset($line_item_wrapper->commerce_product)) {
+        $line_items_products[] = $line_item_wrapper;
+        $total_amount_products += $line_item_wrapper->commerce_total->amount->value();
+      }
+
+      if ('shipping' === $line_item_wrapper->type->value()) {
+        $line_items_shipping[] = $line_item_wrapper;
+        $total_amount_shipping += $line_item_wrapper->commerce_total->amount->value();
+      }
+    }
+
+    // Only 4 line items SKU's starts from "6".
+    // @see CommerceExampleProductLineItemMigration::prepareRow()
+    $this->assertIdentical(4, $order->commerce_line_items->count(), t('All line items imported and attached to an order.'));
+    // Only 2 of 4 line items contains a product.
+    // @see CommerceExampleProductLineItemMigration::shouldProductBeAttached()
+    $this->assertIdentical(2, count($line_items_products), t('Number of product line items is correct.'));
+    // Since we have 4 line items and 2 of them are of "product" type,
+    // then other couple must be with "shipping" type.
+    $this->assertIdentical(2, count($line_items_shipping), t('Number of shipping line items is correct.'));
+    $this->assertIdentical(1797000, $total_amount_products, t('Product prices are correct.'));
+    $this->assertIdentical(1350000, $total_amount_shipping, t('Shipping prices are correct.'));
+    $this->assertIdentical('completed', $order->status->value(), t('An order has correct status.'));
+    $this->assertIdentical('127.0.0.1', $order->hostname->value(), t('An order has correct hostname.'));
+    $this->assertIdentical('test@example.com', $order->mail->value(), t('An order has correct email address.'));
+  }
+
+  /**
+   * Tests integrity of "64671631" product.
+   */
+  public function testProduct() {
+    $product = $this->getProduct('64671631');
+
+    $this->assertIdentical('120000', $product->commerce_price->amount->value(), t('Product amount is correct.'));
+    $this->assertIdentical('GBP', $product->commerce_price->currency_code->value(), t('Product currency code is correct.'));
+  }
+
+  /**
+   * Tests of removing imported data.
+   */
+  public function testRollback() {
+    $this->migrate('rollback');
+
+    try {
+      $this->testOrder();
+      $this->fail(t('Order should not be loaded after rollback!'));
+    }
+    catch (\Exception $e) {
+      $this->pass($e->getMessage());
+    }
+
+    try {
+      $this->testProduct();
+      $this->fail(t('Product should not be loaded after rollback!'));
+    }
+    catch (\Exception $e) {
+      $this->pass($e->getMessage());
+    }
+  }
+
+}

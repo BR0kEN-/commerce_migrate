@@ -46,6 +46,21 @@ class CommerceExampleMigration extends Migration {
 }
 ```
 
+## Testing
+
+```shell
+php scripts/run-tests.sh --verbose "Commerce Migrate"
+```
+
+To see imported data on existing site, you should:
+
+```shell
+drush si minimal -y
+drush en commerce_order commerce_product_reference commerce_shipping commerce_migrate_example -y
+drush mreg
+drush migrate-import --group=commerce_example
+```
+
 ## Resources
 
 The Migrate handbook page at https://www.drupal.org/node/415260

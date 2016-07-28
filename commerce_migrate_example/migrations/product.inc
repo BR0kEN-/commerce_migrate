@@ -40,7 +40,7 @@ class CommerceExampleProductMigration extends CommerceMigrateExampleProductsCsv 
       ->defaultValue('MigrateFileUri');
 
     $this->addFieldMapping('field_image:source_dir')
-      ->defaultValue("$this->modulePath/images");
+      ->defaultValue($this->getModulePath() . '/images');
   }
 
 }

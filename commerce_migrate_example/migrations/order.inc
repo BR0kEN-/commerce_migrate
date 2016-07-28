@@ -19,14 +19,7 @@ class CommerceExampleOrderMigration extends CommerceMigrateExampleOrdersCsv {
     $this->description = t('Import orders with line items from CSV file (with no header).');
     $this->destination = new MigrateDestinationEntityAPI('commerce_order', 'commerce_order');
 
-    $this->addFieldMapping('order_number', 'number');
-
-    $this->addFieldMapping('status')
-      ->defaultValue('completed');
-
-    $this->addFieldMapping('mail')
-      ->defaultValue('test@example.com');
-
+    $this->addSimpleMappings(array_keys($this->csvColumns()));
     $this->addUnmigratedDestinations(array(
       'uid',
       'type',
@@ -34,7 +27,6 @@ class CommerceExampleOrderMigration extends CommerceMigrateExampleOrdersCsv {
       'owner',
       'created',
       'changed',
-      'hostname',
       'commerce_line_items',
       'commerce_order_total',
       'commerce_customer_billing',
@@ -50,7 +42,7 @@ class CommerceExampleOrderMigration extends CommerceMigrateExampleOrdersCsv {
   public function prepare(stdClass $entity, stdClass $row) {
     $order_id = db_select('commerce_order', 'co')
       ->fields('co', array('order_id'))
-      ->condition('order_number', $row->number)
+      ->condition('order_number', $row->order_number)
       ->execute()
       ->fetchField();
 

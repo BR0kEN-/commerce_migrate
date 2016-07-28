@@ -1,13 +1,17 @@
 name = Commerce Migrate Example
-description = Demonstrate migration of products and product display nodes.
+description = Demonstrate import of products, product display nodes, line items and orders.
 package = Commerce (contrib)
 hidden = TRUE
 core = 7.x
 
-files[] = commerce_migrate_example.migrate.inc
+dependencies[] = commerce_migrate
+
+; Migration facades.
+files[] = migrations/abstractions/orders.inc
+files[] = migrations/abstractions/products.inc
+files[] = migrations/abstractions/migration.inc
+; Migration definitions.
 files[] = migrations/order.inc
 files[] = migrations/product.inc
 files[] = migrations/product_display.inc
 files[] = migrations/product_line_item.inc
-
-dependencies[] = commerce_migrate
