@@ -11,6 +11,11 @@
 abstract class CommerceMigrateExampleMigration extends \Migration {
 
   /**
+   * The name of CSV file.
+   */
+  const FILE = '';
+
+  /**
    * Module path.
    *
    * @var string
@@ -23,13 +28,9 @@ abstract class CommerceMigrateExampleMigration extends \Migration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
-    if (empty($arguments['source_file'])) {
-      throw new \Exception(t('Name of CSV file with source data has not been set.'));
-    }
-
     $this->modulePath = drupal_get_path('module', 'commerce_migrate_example');
 
-    $csv_file = "$this->modulePath/files/{$arguments['source_file']}";
+    $csv_file = $this->modulePath . '/files/' . static::FILE;
     $csv_columns = array();
 
     if (!file_exists($csv_file)) {
@@ -38,7 +39,7 @@ abstract class CommerceMigrateExampleMigration extends \Migration {
       )));
     }
 
-    foreach ($this->csvColumns() as $drupal_field => $csv_header) {
+    foreach (static::csvColumns() as $drupal_field => $csv_header) {
       $csv_columns[] = array($drupal_field, $csv_header);
     }
 
@@ -55,7 +56,7 @@ abstract class CommerceMigrateExampleMigration extends \Migration {
   protected function buildMap($destination_schema) {
     // Create a map object for tracking the relationships between source rows.
     // The first column in CSV - the primary index.
-    $columns = $this->csvColumns();
+    $columns = static::csvColumns();
 
     $this->map = new \MigrateSQLMap(
       $this->machineName,
@@ -90,6 +91,8 @@ abstract class CommerceMigrateExampleMigration extends \Migration {
    *   An associative array where key is a machine name of a field from
    *   CSV file and value - human-readable name of a CSV column.
    */
-  abstract protected function csvColumns();
+  public static function csvColumns() {
+    return array();
+  }
 
 }

@@ -16,8 +16,8 @@ class CommerceExampleProductLineItemMigration extends CommerceMigrateExampleProd
     parent::__construct($arguments);
 
     $this->buildMap(MigrateDestinationEntityAPI::getKeySchema('commerce_line_item'));
-    $this->description = t('Import commerce line items with products from CSV file (with no header).');
-    $this->destination = new MigrateDestinationEntityAPI('commerce_line_item', 'product');
+    $this->setDescription(t('Import commerce line items with products from CSV file (with no header).'));
+    $this->setDestination(new MigrateDestinationEntityAPI('commerce_line_item', 'product'));
 
     $this->addFieldMapping('order_id', 'order_number')
       ->sourceMigration('CommerceExampleOrder');

@@ -19,18 +19,16 @@ class CommerceExampleProductDisplayMigration extends CommerceMigrateExampleProdu
     parent::__construct($arguments);
 
     $this->buildMap(MigrateDestinationNode::getKeySchema());
-    $this->description = t('Import product display nodes from CSV file (with no header).');
-    $this->destination = new MigrateDestinationNode('product_display');
-
+    $this->setDescription(t('Import product display nodes from CSV file (with no header).'));
+    $this->setDestination(new MigrateDestinationNode('product_display'));
     // For a multivalued import, see the field_migrate_example_country mapping
     // in the Migrate Example in beer.inc.
     // Here we do a single SKU per product node.
     $this->addSimpleMappings(array('title'));
+    $this->addFieldMapping('body', 'description');
 
     $this->addFieldMapping('field_product', 'sku')
       ->sourceMigration('CommerceExampleProduct');
-
-    $this->addFieldMapping('body', 'description');
   }
 
 }

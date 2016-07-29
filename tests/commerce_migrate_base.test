@@ -10,6 +10,12 @@
 abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
 
   /**
+   * Content of CSV files.
+   *
+   * @var array[]
+   */
+  private $csvFiles = array();
+  /**
    * User object of a store administrator.
    *
    * @var \stdClass
@@ -56,7 +62,7 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
     $test_class = get_called_class();
 
     if (!method_exists($test_class, 'getInfo')) {
-      throw new \Exception(t('The "@method" is not implemented by "@test_class" test class!', array(
+      throw new \Exception(format_string('The "@method" is not implemented by "@test_class" test class!', array(
         '@method' => __METHOD__,
         '@test_class' => $test_class,
       )));
@@ -89,7 +95,7 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
       $this->storeAdmin = $this->createStoreAdmin();
 
       if (FALSE === $this->storeAdmin) {
-        $this->fail(t('Failed to create Store Admin user for test.'));
+        $this->fail('Failed to create Store Admin user for test.');
       }
     }
 
@@ -112,6 +118,19 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
   }
 
   /**
+   * Returns raw data of an order from CSV file.
+   *
+   * @param string $order_number
+   *   Order number. See "orders.csv".
+   *
+   * @return \stdClass
+   *   Raw data of an order from CSV file.
+   */
+  protected function getOrdersCsvItem($order_number) {
+    return $this->readCsv('CommerceMigrateExampleOrdersCsv', $order_number);
+  }
+
+  /**
    * Load product by SKU.
    *
    * @see commerce_product_load_by_sku()
@@ -124,6 +143,25 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
    */
   protected function getProduct($sku) {
     return $this->getEntityWrapper('commerce_product', 'sku', $sku);
+  }
+
+  /**
+   * Returns raw data of a product from CSV file.
+   *
+   * @param string $sku
+   *   Product SKU. See "products.csv".
+   *
+   * @return \stdClass
+   *   Raw data of a product from CSV file.
+   */
+  protected function getProductsCsvItem($sku) {
+    $item = $this->readCsv('CommerceMigrateExampleProductsCsv', $sku);
+
+    if (empty($item->currency_code)) {
+      $item->currency_code = commerce_default_currency();
+    }
+
+    return $item;
   }
 
   /**
@@ -142,7 +180,7 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
     $method = "process$action";
 
     if (!method_exists('MigrationBase', $method)) {
-      throw new \Exception(t('Wrong action! Read documentation for "@method" method!', array(
+      throw new \Exception(format_string('Wrong action! Read documentation for "@method" method!', array(
         '@method' => __METHOD__,
       )));
     }
@@ -158,12 +196,51 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
       $this->assertEqual(
         \Migration::getInstance($migration)->{$method}(),
         \Migration::RESULT_COMPLETED,
-        t('@action of "@migration" completed.', array(
+        format_string('@action of "@migration" completed.', array(
           '@action' => $action,
           '@migration' => $migration,
         ))
       );
     }
+  }
+
+  /**
+   * Returns data from one of CSV files.
+   *
+   * @param string|\CommerceMigrateExampleMigration $class_name
+   *   The name of object which represents CSV file.
+   * @param string $primary_key
+   *   One of values from the first column in CSV.
+   *
+   * @return \stdClass
+   *   Row from CSV.
+   */
+  private function readCsv($class_name, $primary_key) {
+    if (!isset($this->csvFiles[$class_name][$primary_key])) {
+      $file_object = new \SplFileObject(drupal_get_path('module', 'commerce_migrate_example') . '/files/' . $class_name::FILE);
+      $column_names = array_keys($class_name::csvColumns());
+      $column_count = count($column_names);
+
+      while ($file_object->valid()) {
+        $line = $file_object->fgetcsv();
+
+        // Empty lines.
+        if ($column_count !== count($line)) {
+          continue;
+        }
+
+        if (current($line) === $primary_key) {
+          return $this->csvFiles[$class_name][$primary_key] = (object) array_combine($column_names, $line);
+        }
+      }
+
+      throw new \RuntimeException(format_string('One of @type cannot be loaded by "@value"', array(
+        '@type' => basename($class_name::FILE),
+        '@value' => $primary_key,
+      )));
+    }
+
+    return $this->csvFiles[$class_name][$primary_key];
   }
 
   /**
@@ -185,7 +262,7 @@ abstract class CommerceMigrateBaseTestCase extends CommerceBaseTestCase {
     $entity = entity_load($entity_type, FALSE, array($property => $value));
 
     if (empty($entity)) {
-      throw new \Exception(t('Entity of "@entity_type" cannot be loaded using "@property" property with "@value" value.', array(
+      throw new \Exception(format_string('Entity of "@entity_type" cannot be loaded using "@property" property with "@value" value.', array(
         '@entity_type' => $entity_type,
         '@property' => $property,
         '@value' => $value,

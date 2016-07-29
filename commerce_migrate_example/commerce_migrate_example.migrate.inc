@@ -33,13 +33,11 @@ function commerce_migrate_example_migrate_api() {
   $info['migrations']['CommerceExampleProduct'] = array(
     'class_name' => 'CommerceExampleProductMigration',
     'group_name' => 'commerce_example',
-    'source_file' => 'products.csv',
   );
 
   $info['migrations']['CommerceExampleProductDisplay'] = array(
     'class_name' => 'CommerceExampleProductDisplayMigration',
     'group_name' => 'commerce_example',
-    'source_file' => 'products.csv',
     'dependencies' => array(
       'CommerceExampleProduct',
     ),
@@ -48,7 +46,6 @@ function commerce_migrate_example_migrate_api() {
   $info['migrations']['CommerceExampleProductLineItem'] = array(
     'class_name' => 'CommerceExampleProductLineItemMigration',
     'group_name' => 'commerce_example',
-    'source_file' => 'products.csv',
     'dependencies' => array(
       'CommerceExampleProduct',
     ),
@@ -57,7 +54,6 @@ function commerce_migrate_example_migrate_api() {
   $info['migrations']['CommerceExampleOrder'] = array(
     'class_name' => 'CommerceExampleOrderMigration',
     'group_name' => 'commerce_example',
-    'source_file' => 'orders.csv',
     'dependencies' => array(
       'CommerceExampleProductLineItem',
     ),

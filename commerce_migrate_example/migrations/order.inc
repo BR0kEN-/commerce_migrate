@@ -16,10 +16,9 @@ class CommerceExampleOrderMigration extends CommerceMigrateExampleOrdersCsv {
     parent::__construct($arguments);
 
     $this->buildMap(MigrateDestinationEntityAPI::getKeySchema('commerce_order'));
-    $this->description = t('Import orders with line items from CSV file (with no header).');
-    $this->destination = new MigrateDestinationEntityAPI('commerce_order', 'commerce_order');
-
-    $this->addSimpleMappings(array_keys($this->csvColumns()));
+    $this->setDescription(t('Import orders with line items from CSV file (with no header).'));
+    $this->setDestination(new MigrateDestinationEntityAPI('commerce_order', 'commerce_order'));
+    $this->addSimpleMappings(array_keys(static::csvColumns()));
     $this->addUnmigratedDestinations(array(
       'uid',
       'type',

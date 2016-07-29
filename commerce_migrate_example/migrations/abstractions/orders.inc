@@ -9,10 +9,12 @@
  */
 abstract class CommerceMigrateExampleOrdersCsv extends \CommerceMigrateExampleMigration {
 
+  const FILE = 'orders.csv';
+
   /**
    * {@inheritdoc}
    */
-  protected function csvColumns() {
+  public static function csvColumns() {
     return array(
       'order_number' => 'Number',
       'status' => 'Number',

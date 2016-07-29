@@ -23,12 +23,9 @@ class CommerceExampleProductMigration extends CommerceMigrateExampleProductsCsv 
     // arguments, but instead this just specifies the 'product' product type
     // to make it obvious what's going on.
     $this->buildMap(MigrateDestinationEntityAPI::getKeySchema('commerce_product'));
-    $this->description = t('Import products from CSV file (with no header).');
-    // Hardwiring the product type to "product".
-    $this->destination = new MigrateDestinationEntityAPI('commerce_product', 'product');
-
+    $this->setDescription(t('Import products from CSV file (with no header).'));
+    $this->setDestination(new MigrateDestinationEntityAPI('commerce_product', 'product'));
     $this->addSimpleMappings(array('sku', 'title'));
-
     $this->addFieldMapping('commerce_price', 'price');
 
     $this->addFieldMapping('commerce_price:currency_code', 'currency_code')
